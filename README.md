@@ -22,7 +22,7 @@
 ```bash
 sudo mkdir -p /opt/crewdock
 sudo chown "$(id -u):$(id -g)" /opt/crewdock
-git clone --branch v0.10.0 https://github.com/zhang2580384/crewdock.git /opt/crewdock/source
+git clone --branch v0.10.1 https://github.com/zhang2580384/crewdock.git /opt/crewdock/source
 cd /opt/crewdock/source
 python3 scripts/init-env.py --output /opt/crewdock/.env --email admin@example.com
 ```

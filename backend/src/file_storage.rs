@@ -500,32 +500,32 @@ mod tests {
 
     #[test]
     fn storage_paths_cannot_escape_file_root() {
-        let root = Path::new("C:/crewdock/files");
-        let cwd = Path::new("C:/crewdock");
+        let cwd = unique_test_dir("storage-paths");
+        let root = cwd.join("files");
         assert!(
             resolve_storage_path_with_cwd(
-                root,
+                &root,
                 Path::new("data/files"),
-                cwd,
-                "C:/crewdock/files/project/file.bin"
+                &cwd,
+                root.join("project/file.bin").to_str().unwrap()
             )
             .is_ok()
         );
         assert!(
             resolve_storage_path_with_cwd(
-                root,
+                &root,
                 Path::new("data/files"),
-                cwd,
-                "C:/crewdock/other/file.bin"
+                &cwd,
+                cwd.join("other/file.bin").to_str().unwrap()
             )
             .is_err()
         );
         assert!(
             resolve_storage_path_with_cwd(
-                root,
+                &root,
                 Path::new("data/files"),
-                cwd,
-                "C:/crewdock/files/../secret"
+                &cwd,
+                root.join("../secret").to_str().unwrap()
             )
             .is_err()
         );
@@ -533,32 +533,33 @@ mod tests {
 
     #[test]
     fn storage_paths_support_legacy_cwd_and_new_root_relative_values() {
-        let root = Path::new("C:/crewdock/data/files");
-        let cwd = Path::new("C:/crewdock");
+        let cwd = unique_test_dir("legacy-storage-paths");
+        let root = cwd.join("data/files");
+        let different_cwd = cwd.join("different-cwd");
         assert_eq!(
             resolve_storage_path_with_cwd(
-                root,
+                &root,
                 Path::new("data/files"),
-                Path::new("C:/different-cwd"),
+                &different_cwd,
                 "data/files/project/legacy.bin",
             )
             .unwrap(),
-            Path::new("C:/crewdock/data/files/project/legacy.bin")
+            root.join("project/legacy.bin")
         );
         assert_eq!(
             resolve_storage_path_with_cwd(
-                root,
+                &root,
                 Path::new("./data/files"),
-                Path::new("C:/different-cwd"),
+                &different_cwd,
                 "./data/files/project/legacy.bin",
             )
             .unwrap(),
-            Path::new("C:/crewdock/data/files/project/legacy.bin")
+            root.join("project/legacy.bin")
         );
         assert_eq!(
-            resolve_storage_path_with_cwd(root, Path::new("data/files"), cwd, "project/new.bin")
+            resolve_storage_path_with_cwd(&root, Path::new("data/files"), &cwd, "project/new.bin")
                 .unwrap(),
-            Path::new("C:/crewdock/data/files/project/new.bin")
+            root.join("project/new.bin")
         );
     }
 
