@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch for crewdock update requests
+
+[Path]
+PathExists=/opt/crewdock/update/control/request.json
+Unit=crewdock-update.service
+
+[Install]
+WantedBy=multi-user.target

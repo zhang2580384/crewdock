@@ -1,0 +1,54 @@
+name: Checks
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm test
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --locked --workspace
+
+  publication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python scripts/verify-version.py
+      - if: startsWith(github.ref, 'refs/tags/')
+        run: python scripts/verify-version.py --tag "$GITHUB_REF_NAME"
+      - run: python scripts/publish-audit.py
+      - run: python -m unittest discover -s deploy/update -p 'test_*.py'
+      - run: python -m unittest discover -s scripts -p 'test_*.py'
+      - run: sh -n deploy/update/install-update-service.sh
+      - run: |
+          python scripts/init-env.py --output .env
+          docker compose --env-file .env -f deploy/docker-compose.yml config --quiet

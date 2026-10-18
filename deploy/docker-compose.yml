@@ -1,0 +1,95 @@
+name: crewdock
+
+services:
+  crewdock-postgres:
+    image: postgres:17-alpine
+    container_name: crewdock-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-crewdock}
+      POSTGRES_USER: ${POSTGRES_USER:-crewdock}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/init-env.py first}
+    volumes:
+      - ${CREWDOCK_ROOT:-/opt/crewdock}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crewdock} -d ${POSTGRES_DB:-crewdock}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  crewdock-redis:
+    image: redis:8-alpine
+    container_name: crewdock-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ${CREWDOCK_ROOT:-/opt/crewdock}/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  crewdock-api:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+      args:
+        CREWDOCK_GIT_SHA: ${CREWDOCK_GIT_SHA:-unknown}
+        CREWDOCK_BUILD_TIME: ${CREWDOCK_BUILD_TIME:-unknown}
+        DEBIAN_MIRROR: ${CREWDOCK_DEBIAN_MIRROR:-http://deb.debian.org/debian}
+        DEBIAN_SECURITY_MIRROR: ${CREWDOCK_DEBIAN_SECURITY_MIRROR:-http://deb.debian.org/debian-security}
+    image: crewdock-api:${CREWDOCK_VERSION:-local}
+    container_name: crewdock-api
+    restart: unless-stopped
+    depends_on:
+      crewdock-postgres:
+        condition: service_healthy
+      crewdock-redis:
+        condition: service_healthy
+    environment:
+      CREWDOCK_HOST: 0.0.0.0
+      CREWDOCK_PORT: 16888
+      CREWDOCK_TRUSTED_PROXY_TOKEN: ${CREWDOCK_TRUSTED_PROXY_TOKEN:-}
+      CREWDOCK_ICON_PRIVATE_ORIGINS: ${CREWDOCK_ICON_PRIVATE_ORIGINS:-}
+      CREWDOCK_PUBLIC_BASE_URL: ${CREWDOCK_PUBLIC_BASE_URL:-http://127.0.0.1:16888}
+      CREWDOCK_DATABASE_URL: postgres://${POSTGRES_USER:-crewdock}:${POSTGRES_PASSWORD:?Run scripts/init-env.py first}@crewdock-postgres:5432/${POSTGRES_DB:-crewdock}
+      CREWDOCK_REDIS_URL: redis://crewdock-redis:6379/0
+      CREWDOCK_FILE_ROOT: /opt/crewdock/files
+      CREWDOCK_MASTER_KEY: ${CREWDOCK_MASTER_KEY:?Run scripts/init-env.py first}
+      CREWDOCK_SESSION_SECRET: ${CREWDOCK_SESSION_SECRET:?Run scripts/init-env.py first}
+      CREWDOCK_SESSION_TTL_DAYS: ${CREWDOCK_SESSION_TTL_DAYS:-90}
+      CREWDOCK_SESSION_REFRESH_HOURS: ${CREWDOCK_SESSION_REFRESH_HOURS:-24}
+      CREWDOCK_LIBREOFFICE_BIN: ${CREWDOCK_LIBREOFFICE_BIN:-libreoffice}
+      CREWDOCK_PDFTOPPM_BIN: ${CREWDOCK_PDFTOPPM_BIN:-pdftoppm}
+      CREWDOCK_UPDATE_CONTROL_ROOT: /opt/crewdock/update-control
+      CREWDOCK_BOOTSTRAP_EMAIL: ${CREWDOCK_BOOTSTRAP_EMAIL:?Set the initial administrator email}
+      CREWDOCK_BOOTSTRAP_PASSWORD: ${CREWDOCK_BOOTSTRAP_PASSWORD:?Run scripts/init-env.py first}
+      CREWDOCK_BOOTSTRAP_NAME: ${CREWDOCK_BOOTSTRAP_NAME:-System Admin}
+    volumes:
+      - ${CREWDOCK_ROOT:-/opt/crewdock}/files:/opt/crewdock/files
+      - ${CREWDOCK_ROOT:-/opt/crewdock}/update/control:/opt/crewdock/update-control
+    expose:
+      - "16888"
+
+  crewdock-web:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_GIT_SHA: ${CREWDOCK_GIT_SHA:-unknown}
+        VITE_BUILD_TIME: ${CREWDOCK_BUILD_TIME:-unknown}
+    image: crewdock-web:${CREWDOCK_VERSION:-local}
+    container_name: crewdock-web
+    restart: unless-stopped
+    depends_on:
+      - crewdock-api
+    ports:
+      - "${CREWDOCK_WEB_BIND:-127.0.0.1}:${CREWDOCK_WEB_PORT:-16888}:80"
+
+networks:
+  default:
+    name: ${CREWDOCK_NETWORK_NAME:-crewdock}
+    ipam:
+      config:
+        - subnet: ${CREWDOCK_NETWORK_SUBNET:-172.16.241.0/24}

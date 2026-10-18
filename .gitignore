@@ -1,0 +1,65 @@
+.env
+.env.*
+!.env.example
+
+# Build output and dependency caches
+target/
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+coverage/
+__pycache__/
+*.pyc
+
+# Runtime data and local uploads
+.worktrees/
+tmp/
+temp/
+backups/
+releases/
+deploy/data/
+deploy/files/
+deploy/update-control/
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.agents/
+.codex/
+.claude/
+*.code-workspace
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local caches and temporary files
+.cache/
+*.swp
+*.swo
+*.orig
+*.rej
+*~
+*.log
+*.tmp
+*.bak
+
+# Local databases, credentials, and private keys
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.rdp
+bookmarks*.html
+bookmarks*.json
+exports/
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*

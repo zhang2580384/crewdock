@@ -1,0 +1,9 @@
+CrewDock / 共舟工作台
+Copyright (C) 2026 CrewDock contributors
+
+CrewDock is licensed under GNU AGPL version 3 or, at your option, any later
+version. See LICENSE for the complete terms.
+
+Third-party dependencies retain their respective copyrights and licenses.
+Dependency names and versions are recorded in frontend/package-lock.json and
+Cargo.lock. This notice does not relicense those dependencies.

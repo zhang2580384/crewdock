@@ -1,0 +1,12 @@
+[Unit]
+Description=Check for crewdock releases every six hours
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=6h
+Persistent=true
+RandomizedDelaySec=5min
+Unit=crewdock-update-check.service
+
+[Install]
+WantedBy=timers.target

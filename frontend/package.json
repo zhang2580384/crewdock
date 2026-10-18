@@ -1,0 +1,27 @@
+{
+  "name": "crewdock-frontend",
+  "version": "0.10.0",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@lucide/vue": "^1.17.0",
+    "md-editor-v3": "^6.5.1",
+    "pdfjs-dist": "^5.4.394",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.28",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^8.0.16",
+    "vue-tsc": "^3.1.8"
+  }
+}
